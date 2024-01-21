@@ -1,0 +1,74 @@
+library(seqinr)
+library(adegenet)
+library(ape)
+library(ggtree)
+library(DECIPHER)
+library(viridis)
+library(ggplot2)
+
+#o'zimizga kerak faylni yuklab olamiz 
+
+seqs <- readDNAStringSet("text.txt", format = "fasta")
+
+# nucletidlar ketma-ketligi bir xil orientatsiyada bo'lishi kerak
+# agar bunday bo'lmasa biz ixtiyoriy ravishda buni to'g'irlab olamiz
+seqs <- OrientNucleotides(seqs)
+
+# ketma-ketlikni tekkis chiziqli holatga keltiramiz
+aligned <- AlignSeqs(seqs)
+
+# chiziqli holatga kelgan ketma-ketlikni yangi oynada ko'rib olishimiz mumkin(ixtiyoriy)
+BrowseSeqs(aligned, highlight=0)
+
+# tekkislangan faylni yangi fasta faylga o'tkazamiz
+writeXStringSet(aligned,
+                file="Walnut_aligned.fasta")
+
+# yangi faylni osonroq nomlash uchun boshqa nom beramiz
+dna <- read.alignment("Walnut_aligned.fasta", format = "fasta")
+
+# tekislik uchun masofa matrisasini yaratamiz 
+D <- dist.alignment(dna, matrix = "similarity")
+
+
+temp <- as.data.frame(as.matrix(D))
+table.paint(temp, cleg=0, clabel.row=.5, clabel.col=.5)+
+  scale_color_viridis()
+
+tre <- nj(D)
+class(tre) #ape paketi yordamida tre holatiga keltiramiz
+
+tre <- ladderize(tre)
+
+#va nihoyat grafiklash 
+plot(tre, cex = 0.6)
+title("similarity in Walnut (ITS)")
+
+
+# or 
+h_cluster <- hclust(D, method = "average", members = NULL) 
+plot(h_cluster, cex = 0.6)
+
+
+#  ggtree yordamida o'zgartirishga harakat qilamiz
+
+ggtree(tre, yscale = "NA")+
+  geom_tiplab(hjust = -0.3, size=4, align = TRUE)+
+  xlim(0,0.5) 
+
+#yoki....
+
+ggtree(tre) + 
+  geom_tiplab(hjust = -0.3, size=4, align = TRUE)+
+  xlim(0,0.5)
+
+
+# hosil bo'lgan tre ni dizaynini o'zgartirishimiz mumkin
+ggtree(tre) + 
+  geom_tiplab(hjust = -0.3, size=4, align = TRUE) + 
+  geom_hilight(node=3, fill="purple", alpha = 0.2) + 
+  geom_hilight(node=2, fill="dark green", alpha = 0.2) +
+  geom_hilight(node=4, fill="gold", alpha = 0.2) +
+  xlim(0,0.5) 
+
+
